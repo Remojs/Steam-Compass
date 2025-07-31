@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Darker Deep Blue Palette for Steam Compass */
+    --deep-blue-900: 220 95% 6%;       /* #080C15 */
+    --deep-blue-800: 220 90% 9%;       /* #0C1320 */
+    --deep-blue-700: 220 85% 12%;      /* #0F1A2E */
+    --deep-blue-600: 220 80% 15%;      /* #13203B */
+    --deep-blue-500: 220 75% 18%;      /* #172648 */
+    --deep-blue-400: 220 70% 22%;      /* #1B2C55 */
+    --accent-blue: 210 90% 55%;        /* #1F7ACC */
+    --accent-blue-light: 210 85% 65%;  /* #3388CC */
+    --pure-white: 0 0% 100%;           /* #FFFFFF */
+    --off-white: 220 15% 90%;          /* #E5E9F0 */
+    
+    /* Design System using Deep Blue palette */
+    --background: var(--deep-blue-900);
+    --foreground: var(--pure-white);
+
+    --card: var(--deep-blue-800);
+    --card-foreground: var(--pure-white);
+
+    --popover: var(--deep-blue-700);
+    --popover-foreground: var(--pure-white);
+
+    --primary: var(--accent-blue);
+    --primary-foreground: var(--deep-blue-900);
+
+    --secondary: var(--deep-blue-600);
+    --secondary-foreground: var(--off-white);
+
+    --muted: var(--deep-blue-700);
+    --muted-foreground: var(--off-white);
+
+    --accent: var(--pure-white);
+    --accent-foreground: var(--deep-blue-900);
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: var(--pure-white);
+
+    --border: var(--deep-blue-600);
+    --input: var(--deep-blue-700);
+    --ring: var(--accent-blue);
+
+    --radius: 0.75rem;
+    
+    /* Beautiful Blue Gradients with Background */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--deep-blue-800)), hsl(var(--deep-blue-600)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent-blue)), hsl(var(--accent-blue-light)));
+    --gradient-dark: linear-gradient(180deg, hsl(var(--deep-blue-900)), hsl(var(--deep-blue-800)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--deep-blue-800)), hsl(var(--deep-blue-700)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--deep-blue-900)) 0%, hsl(var(--deep-blue-700)) 50%, hsl(var(--deep-blue-500)) 100%);
+    --gradient-bg-overlay: linear-gradient(135deg, hsl(var(--deep-blue-900) / 0.85) 0%, hsl(var(--deep-blue-800) / 0.90) 100%);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-glow: all 0.2s ease-in-out;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    background-image: url('./assets/bg-graffiti.png'), var(--gradient-bg-overlay);
+    background-size: cover, cover;
+    background-position: center, center;
+    background-repeat: no-repeat, no-repeat;
+    background-attachment: fixed, fixed;
+  }
+}

@@ -4,8 +4,22 @@ export interface User {
   id: string;
   email: string;
   username: string;
+  display_name?: string;
   steam_id?: string;
+  avatar_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Profile {
+  id: string;
+  email: string;
+  username: string;
+  display_name?: string;
+  steam_id?: string;
+  avatar_url?: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Game {

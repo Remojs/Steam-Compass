@@ -5,7 +5,7 @@ import { steamApi } from './steamApi';
 import { rawgApi } from './rawgApi';
 import { hltbService } from './hltbService';
 import { metricsService } from './metricsService';
-import { supabaseService } from './supabaseService';
+import { SupabaseService } from './supabaseService';
 
 // Mock game data with Steam-like games (temporary until real API integration)
 export const mockGames: Game[] = [
@@ -154,5 +154,5 @@ export {
   rawgApi,
   hltbService,
   metricsService,
-  supabaseService
+  SupabaseService
 };

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Login } from './Login';
 import { Register } from './Register';
+import SupabaseStatus from '../SupabaseStatus';
 import compassLogo from '../../assets/compass-logo.png';
 
 export const AuthContainer = () => {
@@ -21,6 +22,9 @@ export const AuthContainer = () => {
             Tu brújula para navegar tu biblioteca de juegos
           </p>
         </div>
+
+        {/* Supabase Status */}
+        <SupabaseStatus />
 
         {/* Auth Form */}
         {isLogin ? (

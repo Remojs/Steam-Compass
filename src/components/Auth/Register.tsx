@@ -66,9 +66,9 @@ export const Register = ({ onSwitchToLogin }: RegisterProps) => {
       return;
     }
 
-    const success = await register(email, username, password);
+    const result = await register(email, username, password);
     
-    if (success) {
+    if (result.success) {
       toast({
         title: "¡Registro exitoso!",
         description: "Tu cuenta ha sido creada correctamente.",
@@ -76,7 +76,7 @@ export const Register = ({ onSwitchToLogin }: RegisterProps) => {
     } else {
       toast({
         title: "Error",
-        description: "No se pudo crear la cuenta. Inténtalo de nuevo.",
+        description: result.error || "No se pudo crear la cuenta. Inténtalo de nuevo.",
         variant: "destructive",
       });
     }

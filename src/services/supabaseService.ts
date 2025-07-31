@@ -1,103 +1,167 @@
-/**
- * Supabase service placeholder
- * This will be implemented when Supabase is configured
- */
+import { createClient } from '@supabase/supabase-js';
 
-import { env } from '../lib/env';
-import { User, Game } from '../lib/types';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-interface SupabaseError {
-  message: string;
-  details?: string;
-  hint?: string;
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
 }
 
-class SupabaseService {
-  private client: unknown = null; // Will be initialized with createClient from @supabase/supabase-js
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  /**
-   * Initialize Supabase client
-   * TODO: Implement when @supabase/supabase-js is added
-   */
-  init() {
-    if (!env.supabase.url || !env.supabase.anonKey) {
-      console.warn('Supabase configuration missing');
-      return;
+export interface AuthResponse {
+  success: boolean;
+  error?: string;
+}
+
+export class SupabaseService {
+  static isConnected(): boolean {
+    return Boolean(supabaseUrl && supabaseAnonKey);
+  }
+
+  static async signUp(email: string, password: string, username: string): Promise<AuthResponse> {
+    try {
+      console.log('🔧 Iniciando registro para:', email);
+      
+      // Verificar si el usuario ya existe
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        console.log('❌ Usuario ya existe:', email);
+        return { 
+          success: false, 
+          error: 'Ya existe una cuenta con este email' 
+        };
+      }
+
+      console.log('✅ Email disponible, procediendo con registro...');
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username: username
+          }
+        }
+      });
+
+      console.log('📝 Respuesta de Supabase signUp:', { data, error });
+
+      if (error) {
+        console.error('❌ Error en signUp:', error);
+        return { 
+          success: false, 
+          error: error.message || 'Error al crear la cuenta' 
+        };
+      }
+
+      if (!data.user) {
+        console.error('❌ No se obtuvo usuario después del registro');
+        return { 
+          success: false, 
+          error: 'Error inesperado al crear la cuenta' 
+        };
+      }
+
+      console.log('🎉 Usuario registrado exitosamente:', data.user.email);
+      return { success: true };
+
+    } catch (error) {
+      console.error('💥 Error inesperado en signUp:', error);
+      return { 
+        success: false, 
+        error: 'Error inesperado del servidor' 
+      };
     }
-
-    // TODO: Uncomment when Supabase is configured
-    // import { createClient } from '@supabase/supabase-js';
-    // this.client = createClient(env.supabase.url, env.supabase.anonKey);
   }
 
-  /**
-   * Authentication methods
-   */
-  async signUp(email: string, password: string, username: string): Promise<{ user: User | null; error: SupabaseError | null }> {
-    // TODO: Implement Supabase signup
-    console.log('Supabase signup not implemented yet');
-    return { user: null, error: { message: 'Not implemented' } };
+  static async signIn(email: string, password: string): Promise<AuthResponse> {
+    try {
+      console.log('🔧 Iniciando login para:', email);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      console.log('📝 Respuesta de Supabase signIn:', { data, error });
+
+      if (error) {
+        console.error('❌ Error en signIn:', error);
+        return { 
+          success: false, 
+          error: error.message || 'Credenciales inválidas' 
+        };
+      }
+
+      if (!data.user) {
+        console.error('❌ No se obtuvo usuario después del login');
+        return { 
+          success: false, 
+          error: 'Error inesperado al iniciar sesión' 
+        };
+      }
+
+      console.log('🎉 Login exitoso para:', data.user.email);
+      return { success: true };
+
+    } catch (error) {
+      console.error('💥 Error inesperado en signIn:', error);
+      return { 
+        success: false, 
+        error: 'Error inesperado del servidor' 
+      };
+    }
   }
 
-  async signIn(email: string, password: string): Promise<{ user: User | null; error: SupabaseError | null }> {
-    // TODO: Implement Supabase signin
-    console.log('Supabase signin not implemented yet');
-    return { user: null, error: { message: 'Not implemented' } };
+  static async signOut(): Promise<void> {
+    try {
+      console.log('🔧 Cerrando sesión...');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('❌ Error al cerrar sesión:', error);
+      } else {
+        console.log('✅ Sesión cerrada exitosamente');
+      }
+    } catch (error) {
+      console.error('💥 Error inesperado en signOut:', error);
+    }
   }
 
-  async signOut(): Promise<{ error: SupabaseError | null }> {
-    // TODO: Implement Supabase signout
-    console.log('Supabase signout not implemented yet');
-    return { error: null };
+  static async getCurrentUser() {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error('Error getting current user:', error);
+        return null;
+      }
+      return user;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
   }
 
-  async getCurrentUser(): Promise<User | null> {
-    // TODO: Implement get current user
-    console.log('Supabase getCurrentUser not implemented yet');
-    return null;
+  static async getCurrentSession() {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error getting session:', error);
+        return null;
+      }
+      return session;
+    } catch (error) {
+      console.error('Error getting session:', error);
+      return null;
+    }
   }
 
-  /**
-   * Database operations for games
-   */
-  async getGames(userId: string): Promise<Game[]> {
-    // TODO: Implement get games from database
-    console.log('Supabase getGames not implemented yet');
-    return [];
-  }
-
-  async upsertGame(game: Omit<Game, 'id' | 'created_at' | 'updated_at'>): Promise<Game | null> {
-    // TODO: Implement upsert game
-    console.log('Supabase upsertGame not implemented yet');
-    return null;
-  }
-
-  async updateGameMetrics(gameId: string, metrics: Partial<Game>): Promise<Game | null> {
-    // TODO: Implement update game metrics
-    console.log('Supabase updateGameMetrics not implemented yet');
-    return null;
-  }
-
-  async deleteGame(gameId: string): Promise<boolean> {
-    // TODO: Implement delete game
-    console.log('Supabase deleteGame not implemented yet');
-    return false;
-  }
-
-  /**
-   * User profile operations
-   */
-  async updateUserProfile(userId: string, updates: Partial<User>): Promise<User | null> {
-    // TODO: Implement update user profile
-    console.log('Supabase updateUserProfile not implemented yet');
-    return null;
-  }
-
-  async linkSteamAccount(userId: string, steamId: string): Promise<boolean> {
-    // TODO: Implement link Steam account
-    console.log('Supabase linkSteamAccount not implemented yet');
-    return false;
+  static onAuthStateChange(callback: (event: string, session: unknown) => void) {
+    return supabase.auth.onAuthStateChange(callback);
   }
 }
-
-export const supabaseService = new SupabaseService();

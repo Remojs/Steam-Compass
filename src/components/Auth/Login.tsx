@@ -44,17 +44,17 @@ export const Login = ({ onSwitchToRegister }: LoginProps) => {
       return;
     }
 
-    const success = await login(email, password);
+    const result = await login(email, password);
     
-    if (success) {
+    if (result.success) {
       toast({
-        title: "Bienvenido!",
+        title: "¡Bienvenido!",
         description: "Has iniciado sesión correctamente.",
       });
     } else {
       toast({
         title: "Error",
-        description: "Credenciales inválidas. Inténtalo de nuevo.",
+        description: result.error || "Credenciales inválidas. Inténtalo de nuevo.",
         variant: "destructive",
       });
     }

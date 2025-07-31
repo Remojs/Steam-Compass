@@ -7,6 +7,7 @@ import { Filters } from './Filters';
 import { Button } from '../ui/button';
 import { LogOut } from 'lucide-react';
 import compassLogo from '../../assets/compass-logo.png';
+import SupabaseStatus from '../SupabaseStatus';
 
 export const Dashboard = () => {
   const [games, setGames] = useState<Game[]>([]);
@@ -55,15 +56,17 @@ export const Dashboard = () => {
                 </p>
               </div>
             </div>
-            
-            <Button
-              variant="outline"
-              onClick={logout}
-              className="gap-2 border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300"
-            >
-              <LogOut className="w-4 h-4" />
-              Cerrar Sesión
-            </Button>
+            <div className="flex items-center gap-4">
+              <SupabaseStatus />
+              <Button
+                variant="outline"
+                onClick={logout}
+                className="gap-2 border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300"
+              >
+                <LogOut className="w-4 h-4" />
+                Cerrar Sesión
+              </Button>
+            </div>
           </div>
         </div>
       </header>

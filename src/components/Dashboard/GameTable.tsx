@@ -36,10 +36,12 @@ export const GameTable = ({ games, isLoading }: GameTableProps) => {
             <tr>
               <th className="p-4 text-left font-semibold text-accent">Portada</th>
               <th className="p-4 text-left font-semibold text-accent">Nombre</th>
-              <th className="p-4 text-center font-semibold text-accent">Horas Est.</th>
+              <th className="p-4 text-center font-semibold text-accent">Horas Jugadas</th>
               <th className="p-4 text-center font-semibold text-accent">Metascore</th>
               <th className="p-4 text-center font-semibold text-accent">Estrellas</th>
               <th className="p-4 text-center font-semibold text-accent">% Positivo</th>
+              <th className="p-4 text-center font-semibold text-accent">Completar</th>
+              <th className="p-4 text-center font-semibold text-accent">Calidad/Hora</th>
             </tr>
           </thead>
           <tbody>

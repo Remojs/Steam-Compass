@@ -1,22 +1,35 @@
 import { Game } from '../../hooks/useSortFilter';
-import { Star } from 'lucide-react';
+import { Star, Trophy } from 'lucide-react';
+import { calculateStarRating, calculateQualityPerHour } from '../../utils/gameCalculations';
 
 interface GameRowProps {
   game: Game;
 }
 
 export const GameRow = ({ game }: GameRowProps) => {
+  // Calcular valores reales
+  const realStarRating = calculateStarRating(game);
+  const realQualityPerHour = calculateQualityPerHour(game);
+  
   const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${
-          i < rating 
-            ? 'fill-primary text-primary' 
-            : 'text-muted-foreground'
-        }`}
-      />
-    ));
+    return Array.from({ length: 5 }, (_, i) => {
+      const starValue = i + 1;
+      const isHalfStar = rating >= i + 0.5 && rating < starValue;
+      const isFullStar = rating >= starValue;
+      
+      return (
+        <Star
+          key={i}
+          className={`w-4 h-4 ${
+            isFullStar 
+              ? 'fill-yellow-400 text-yellow-400' 
+              : isHalfStar
+              ? 'fill-yellow-400/50 text-yellow-400'
+              : 'text-gray-300'
+          }`}
+        />
+      );
+    });
   };
 
   const getMetascoreColor = (score: number) => {
@@ -36,15 +49,32 @@ export const GameRow = ({ game }: GameRowProps) => {
   return (
     <tr className="border-b border-border hover:bg-muted/50 transition-colors">
       <td className="p-4">
-        <img
-          src={game.cover}
-          alt={game.name}
-          className="w-16 h-20 object-cover rounded-md border"
-        />
+        <div className="w-12 h-12 flex-shrink-0">
+          <img
+            src={game.cover}
+            alt={game.name}
+            className="w-12 h-12 object-cover rounded-lg border border-border shadow-sm"
+            onError={(e) => {
+              // Fallback a una imagen por defecto si falla
+              const target = e.target as HTMLImageElement;
+              target.src = '/placeholder.svg';
+            }}
+          />
+        </div>
       </td>
       
       <td className="p-4">
-        <h4 className="font-medium text-foreground">{game.name}</h4>
+        <div className="flex items-center gap-2">
+          <h4 className="font-medium text-foreground">{game.name}</h4>
+          {game.hasPlatinum && (
+            <div 
+              className="flex items-center justify-center w-5 h-5 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full shadow-md"
+              title="Trofeo Platino disponible"
+            >
+              <Trophy className="w-3 h-3 text-yellow-900" />
+            </div>
+          )}
+        </div>
       </td>
       
       <td className="p-4 text-center">
@@ -53,21 +83,45 @@ export const GameRow = ({ game }: GameRowProps) => {
       
       <td className="p-4 text-center">
         <span className={`font-bold ${getMetascoreColor(game.metascore)}`}>
-          {game.metascore}
+          {game.metascore > 0 ? game.metascore : '-'}
         </span>
       </td>
       
       <td className="p-4">
         <div className="flex items-center justify-center gap-1">
-          {renderStars(game.stars)}
+          {renderStars(realStarRating)}
         </div>
       </td>
       
       <td className="p-4 text-center">
         <span className={`font-medium ${getPositivePercentageColor(game.positivePercentage)}`}>
-          {game.positivePercentage}%
+          {game.positivePercentage > 0 ? `${game.positivePercentage}%` : '-'}
+        </span>
+      </td>
+
+      {/* Nueva columna: Horas para completar con estimaciones */}
+      <td className="p-4 text-center">
+        <span className="text-muted-foreground">
+          {game.hoursToComplete ? `${game.hoursToComplete}h` : 
+           game.estimatedHours > 0 ? `~${Math.round(game.estimatedHours * 1.5)}h` : '-'}
+        </span>
+      </td>
+
+      {/* Nueva columna: Calidad por hora siempre calculada */}
+      <td className="p-4 text-center">
+        <span className={`font-medium ${getQualityPerHourColor(realQualityPerHour)}`}>
+          {realQualityPerHour.toFixed(2)}
         </span>
       </td>
     </tr>
   );
+};
+
+const getQualityPerHourColor = (quality: number) => {
+  if (quality >= 2.0) return 'text-emerald-500';    // Excelente (>= 2.0)
+  if (quality >= 1.5) return 'text-green-500';      // Muy bueno (1.5-1.99)
+  if (quality >= 1.0) return 'text-yellow-500';     // Bueno (1.0-1.49)
+  if (quality >= 0.5) return 'text-orange-500';     // Regular (0.5-0.99)
+  if (quality > 0) return 'text-red-500';           // Bajo (0.01-0.49)
+  return 'text-gray-400';                           // Sin datos (0)
 };

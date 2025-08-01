@@ -8,6 +8,10 @@ export interface Game {
   metascore: number;
   stars: number;
   positivePercentage: number;
+  // Nuevos campos
+  hoursToComplete?: number;
+  qualityPerHour?: number;
+  hasPlatinum?: boolean;
 }
 
 type SortField = 'estimatedHours' | 'metascore' | 'stars' | 'positivePercentage';

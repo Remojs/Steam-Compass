@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Login } from './Login';
 import { Register } from './Register';
 import SupabaseStatus from '../SupabaseStatus';
-import compassLogo from '../../assets/compass-logo.png';
+import { Compass } from 'lucide-react';
 
 export const AuthContainer = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,7 +14,7 @@ export const AuthContainer = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-16 h-16 rounded-full bg-gradient-accent flex items-center justify-center p-2">
-              <img src={compassLogo} alt="Steam Compass" className="w-10 h-10" />
+              <Compass className="w-10 h-10 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-foreground">Steam Compass</h1>
           </div>

@@ -1,5 +1,5 @@
 import { supabase } from './supabaseService';
-import { GameMetadataService } from './gameMetadataService';
+import { gameDataCollectorService, CompleteGameData } from './gameDataCollectorService';
 
 interface SteamGame {
   appid: number;
@@ -26,10 +26,17 @@ export interface GameData {
   playtime_forever: number;
   cover_url?: string;
   metacritic_score?: number;
+  metacritic_user_score?: number;
   completion_time?: number;
-  positive_reviews?: number;
-  negative_reviews?: number;
+  main_story_hours?: number;
+  main_plus_extra_hours?: number;
+  completionist_hours?: number;
+  estimated_completion_time?: number;
+  review_percentage?: number;
   stars_rating?: number;
+  quality_score?: number;
+  value_rating?: number;
+  last_updated?: string;
 }
 
 export interface SyncResult {
@@ -166,164 +173,46 @@ export class SteamService {
   /**
    * Convertir juegos de Steam a formato de la aplicación con datos enriquecidos
    */
-  static async processGames(steamGames: SteamGame[]): Promise<GameData[]> {
-    const processedGames: GameData[] = [];
+  /**
+   * Procesar juegos de Steam y obtener datos completos
+   */
+  static async processGames(steamGames: SteamGame[]): Promise<CompleteGameData[]> {
+    console.log(`🎮 Procesando ${steamGames.length} juegos de Steam...`);
     
-    // Procesar en lotes para obtener información adicional
-    for (let i = 0; i < steamGames.length; i += 10) {
-      const batch = steamGames.slice(i, i + 10);
+    // Convertir formato de SteamGame a formato requerido por el collector
+    const gamesToProcess = steamGames.map(game => ({
+      appid: game.appid,
+      name: game.name,
+      playtime_forever: game.playtime_forever
+    }));
+
+    // Usar el nuevo servicio de recopilación de datos
+    const result = await gameDataCollectorService.collectMultipleGamesData(
+      gamesToProcess,
+      {
+        batchSize: 3, // Lotes más pequeños para evitar rate limits
+        delayBetweenBatches: 3000, // 3 segundos entre lotes
+        includeReviews: true,
+        includeMetacritic: true,
+        includeCompletionTimes: true,
+        checkWishlist: false // No verificar wishlist por ahora
+      }
+    );
+
+    if (result.success) {
+      console.log(`✅ Procesamiento completado: ${result.successful_fetches}/${result.total_processed} juegos`);
       
-      const batchPromises = batch.map(async (game) => {
-        // Datos básicos del juego
-        const gameData: GameData = {
-          appid: game.appid,
-          name: game.name,
-          playtime_forever: game.playtime_forever,
-          cover_url: game.img_icon_url 
-            ? `https://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`
-            : undefined,
-        };
-
-        // Intentar obtener datos adicionales del juego
-        try {
-          const gameDetails = await this.getGameDetails(game.appid, game.name);
-          if (gameDetails) {
-            gameData.metacritic_score = gameDetails.metacritic_score;
-            gameData.completion_time = gameDetails.completion_time;
-            gameData.positive_reviews = gameDetails.positive_reviews;
-            gameData.negative_reviews = gameDetails.negative_reviews;
-            // Calcular un rating básico
-            gameData.stars_rating = this.calculateBasicStarRating(gameDetails);
-          }
-        } catch (error) {
-          console.log(`No se pudieron obtener detalles para ${game.name}:`, error);
-          // No usar datos simulados, dejar en undefined/null para usar solo datos reales
-          gameData.positive_reviews = undefined;
-          gameData.negative_reviews = undefined;
-          gameData.stars_rating = undefined;
+      // Agregar URLs de cover si no están presentes
+      result.games.forEach(game => {
+        if (!game.cover_url) {
+          game.cover_url = `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/header.jpg`;
         }
-
-        return gameData;
       });
-
-      const batchResults = await Promise.all(batchPromises);
-      processedGames.push(...batchResults);
-
-      // Esperar entre lotes para no sobrecargar las APIs
-      if (i + 10 < steamGames.length) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
+    } else {
+      console.error(`❌ Error en el procesamiento de juegos`);
     }
 
-    return processedGames;
-  }
-
-  /**
-   * Obtener detalles adicionales de un juego específico
-   */
-  private static async getGameDetails(appId: number, gameName?: string): Promise<{
-    metacritic_score?: number;
-    completion_time?: number;
-    positive_reviews?: number;
-    negative_reviews?: number;
-  } | null> {
-    try {
-      if (gameName) {
-        console.log(`🎮 Obteniendo datos mejorados para: ${gameName} (App ID: ${appId})`);
-        
-        // Usar el nuevo servicio de metadata que es mucho más confiable
-        const gameData = await GameMetadataService.getCompleteGameData(gameName, appId);
-        
-        console.log(`✅ Datos obtenidos para ${gameName}:`, {
-          metacritic: gameData.metacritic_score,
-          tiempo: gameData.completion_time
-        });
-
-        return {
-          metacritic_score: gameData.metacritic_score,
-          completion_time: gameData.completion_time,
-          positive_reviews: undefined,
-          negative_reviews: undefined,
-        };
-      }
-
-      // Fallback al método anterior si no hay nombre
-      const url = `https://store.steampowered.com/api/appdetails?appids=${appId}&filters=metacritic`;
-      
-      for (const proxy of this.CORS_PROXIES) {
-        try {
-          const response = await fetch(`${proxy}${encodeURIComponent(url)}`);
-          
-          if (!response.ok) continue;
-          
-          const text = await response.text();
-          if (text.trim().startsWith('<')) continue;
-          
-          const data = JSON.parse(text);
-          
-          if (data[appId] && data[appId].success && data[appId].data) {
-            const gameData = data[appId].data;
-            
-            return {
-              metacritic_score: gameData.metacritic?.score || undefined,
-              positive_reviews: undefined,
-              negative_reviews: undefined,
-            };
-          }
-          
-          break;
-        } catch (error) {
-          continue;
-        }
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error obteniendo detalles del juego:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Calcular rating básico de estrellas
-   */
-  private static calculateBasicStarRating(gameDetails: {
-    metacritic_score?: number;
-    completion_time?: number;
-    positive_reviews?: number;
-    negative_reviews?: number;
-  }): number {
-    let score = 3; // Base de 3 estrellas
-    
-    // Ajustar por Metacritic (factor principal)
-    if (gameDetails.metacritic_score) {
-      if (gameDetails.metacritic_score >= 90) score = 4.8;
-      else if (gameDetails.metacritic_score >= 85) score = 4.5;
-      else if (gameDetails.metacritic_score >= 80) score = 4.2;
-      else if (gameDetails.metacritic_score >= 75) score = 3.8;
-      else if (gameDetails.metacritic_score >= 70) score = 3.5;
-      else if (gameDetails.metacritic_score >= 65) score = 3.2;
-      else if (gameDetails.metacritic_score >= 60) score = 2.8;
-      else score = 2.5;
-    }
-    
-    // Pequeño ajuste por duración (juegos muy cortos o muy largos)
-    if (gameDetails.completion_time) {
-      if (gameDetails.completion_time < 5) score -= 0.2; // Muy corto
-      else if (gameDetails.completion_time > 100) score -= 0.1; // Muy largo
-      else if (gameDetails.completion_time >= 15 && gameDetails.completion_time <= 50) score += 0.1; // Duración ideal
-    }
-    
-    // Ajustar por reviews
-    if (gameDetails.positive_reviews && gameDetails.negative_reviews) {
-      const total = gameDetails.positive_reviews + gameDetails.negative_reviews;
-      const ratio = gameDetails.positive_reviews / total;
-      
-      if (ratio >= 0.9) score += 0.2;
-      else if (ratio <= 0.6) score -= 0.2;
-    }
-    
-    return Math.max(1, Math.min(5, score));
+    return result.games;
   }
 
   /**
@@ -354,9 +243,11 @@ export class SteamService {
         cover_url: game.cover_url,
         playtime_forever: game.playtime_forever,
         metacritic_score: game.metacritic_score,
-        positive_reviews: game.positive_reviews,
-        negative_reviews: game.negative_reviews,
+        completion_time: game.estimated_completion_time,
+        review_percentage: game.review_percentage,
         stars_rating: game.stars_rating,
+        quality_score: game.quality_score,
+        last_updated: game.last_updated
       }));
 
       // Usar upsert para actualizar juegos existentes

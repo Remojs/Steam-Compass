@@ -1,10 +1,6 @@
 import { Game } from '../hooks/useSortFilter';
 
 // Services
-import { steamApi } from './steamApi';
-import { rawgApi } from './rawgApi';
-import { hltbService } from './hltbService';
-import { metricsService } from './metricsService';
 import { SupabaseService } from './supabaseService';
 
 // Mock game data with Steam-like games (temporary until real API integration)
@@ -150,9 +146,5 @@ export const saveGamesToDatabase = async (userId: string, games: Game[]): Promis
 
 // Export services for direct use if needed
 export {
-  steamApi,
-  rawgApi,
-  hltbService,
-  metricsService,
   SupabaseService
 };

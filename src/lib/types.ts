@@ -29,11 +29,12 @@ export interface Game {
   name: string;
   cover_url?: string;
   playtime_forever: number;
-  hours_to_beat?: number;
+  completion_time?: number;
   metacritic_score?: number;
-  positive_reviews?: number;
-  negative_reviews?: number;
+  review_percentage?: number;
   stars_rating?: number;
+  quality_score?: number;
+  last_updated?: string;
   updated_at: string;
 }
 
@@ -90,4 +91,15 @@ export interface GameMetrics {
   metascore: number;
   stars: number;
   positivePercentage: number;
+}
+
+export interface GameDataResult {
+  appid: number;
+  name: string;
+  horas: number;
+  metascore: number | null;
+  userscore: number | null;
+  total_positive: number;
+  total_negative: number;
+  stars: number;
 }

@@ -3,8 +3,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { useSortFilter, Game } from '../../hooks/useSortFilter';
 import { fetchGames } from '../../services/api';
 import { SteamService } from '../../services/steamService';
-import { RAWGService } from '../../services/rawgService';
-import { calculatePositivePercentage } from '../../utils/gameCalculations';
 import { GameTable } from './GameTable';
 import { Filters } from './Filters';
 import { SteamConnection } from '../SteamConnection';
@@ -41,33 +39,20 @@ export const Dashboard = () => {
         // Cargar juegos desde la base de datos
         const userGames = await SteamService.getUserGamesFromDB(user.id);
         
-        // Obtener metadata adicional de RAWG para algunos juegos (primeros 50 para mejor cobertura)
-        const gameData = userGames.slice(0, 50).map(game => ({
-          name: game.name,
-          playedHours: Math.round(game.playtime_forever / 60)
-        }));
-        const rawgData = await RAWGService.getGamesMetadata(gameData);
-        
         const formattedGames: Game[] = userGames.map(game => {
-          const rawgMetadata = rawgData.get(game.name);
           const playedHours = Math.round(game.playtime_forever / 60);
-          
-          // Solo usar datos reales, sin valores aleatorios
-          const positiveReviews = game.positive_reviews || 0;
-          const negativeReviews = game.negative_reviews || 0;
           
           return {
             id: game.appid.toString(),
             name: game.name,
             cover: game.cover_url || '',
             estimatedHours: playedHours,
-            metascore: rawgMetadata?.metacritic_score || game.metacritic_score || 0,
-            stars: game.stars_rating || 0, // Se calculará dinámicamente
-            positivePercentage: calculatePositivePercentage(positiveReviews, negativeReviews),
-            // Nuevos campos de RAWG con fallback inteligente
-            hoursToComplete: rawgMetadata?.hours_to_complete || undefined,
-            qualityPerHour: rawgMetadata?.quality_per_hour || undefined, // Se calculará dinámicamente
-            hasPlatinum: rawgMetadata?.has_platinum || false,
+            metascore: game.metacritic_score || 0,
+            stars: game.stars_rating || 0,
+            positivePercentage: game.review_percentage || 0,
+            hoursToComplete: game.main_story_hours || game.estimated_completion_time || undefined,
+            qualityPerHour: game.quality_score || undefined,
+            hasPlatinum: false,
           };
         });
         setGames(formattedGames);

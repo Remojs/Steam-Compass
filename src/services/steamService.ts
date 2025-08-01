@@ -1,5 +1,6 @@
 import { supabase } from './supabaseService';
 import { gameDataCollectorService, CompleteGameData } from './gameDataCollectorService';
+import { fetchGameMetrics } from './gameMetricsService';
 
 interface SteamGame {
   appid: number;
@@ -174,7 +175,90 @@ export class SteamService {
    * Convertir juegos de Steam a formato de la aplicación con datos enriquecidos
    */
   /**
-   * Procesar juegos de Steam y obtener datos completos
+   * Procesar juegos de Steam usando fetchGameMetrics (NUEVA FUNCIÓN PRECISA)
+   */
+  static async processGamesWithAccurateData(steamGames: SteamGame[]): Promise<CompleteGameData[]> {
+    console.log(`🎯 Procesando ${steamGames.length} juegos con fetchGameMetrics (datos precisos)...`);
+    
+    const results: CompleteGameData[] = [];
+    const BATCH_SIZE = 3; // Procesar de a 3 para no sobrecargar APIs
+    const DELAY_MS = 2000; // 2 segundos entre lotes
+    
+    for (let i = 0; i < steamGames.length; i += BATCH_SIZE) {
+      const batch = steamGames.slice(i, i + BATCH_SIZE);
+      console.log(`🔄 Procesando lote ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(steamGames.length/BATCH_SIZE)}`);
+      
+      const batchPromises = batch.map(async (game) => {
+        try {
+          // Usar fetchGameMetrics para datos precisos
+          const metrics = await fetchGameMetrics({
+            appid: game.appid,
+            name: game.name,
+            playtime_minutes: game.playtime_forever
+          });
+          
+          // Convertir a formato CompleteGameData
+          const completeData: CompleteGameData = {
+            appid: game.appid,
+            name: game.name,
+            playtime_forever: game.playtime_forever,
+            cover_url: `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/header.jpg`,
+            
+            // Datos precisos de fetchGameMetrics
+            main_story_hours: metrics.horas,
+            estimated_completion_time: metrics.horas,
+            metacritic_score: metrics.metascore,
+            metacritic_user_score: metrics.userscore ? metrics.userscore * 10 : undefined, // Convertir 0-10 a 0-100
+            review_percentage: metrics.total_positive + metrics.total_negative > 0 
+              ? Math.round((metrics.total_positive / (metrics.total_positive + metrics.total_negative)) * 100)
+              : undefined,
+            stars_rating: metrics.stars,
+            
+            // Cálculos adicionales
+            quality_score: metrics.metascore,
+            value_rating: metrics.metascore && metrics.horas > 0 
+              ? Math.round((metrics.metascore / metrics.horas) * 100) / 100
+              : undefined,
+            
+            last_updated: new Date().toISOString()
+          };
+          
+          console.log(`✅ Procesado: ${game.name} - ${metrics.horas}h, ${metrics.metascore}⭐, ${metrics.stars}★`);
+          return completeData;
+          
+        } catch (error) {
+          console.error(`❌ Error procesando ${game.name}:`, error);
+          
+          // Datos mínimos en caso de error
+          return {
+            appid: game.appid,
+            name: game.name,
+            playtime_forever: game.playtime_forever,
+            cover_url: `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/header.jpg`,
+            main_story_hours: Math.round(game.playtime_forever / 60),
+            estimated_completion_time: Math.round(game.playtime_forever / 60),
+            stars_rating: 3.0,
+            last_updated: new Date().toISOString()
+          };
+        }
+      });
+      
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+      
+      // Pausa entre lotes
+      if (i + BATCH_SIZE < steamGames.length) {
+        console.log(`⏳ Esperando ${DELAY_MS}ms antes del siguiente lote...`);
+        await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+      }
+    }
+    
+    console.log(`✅ Procesamiento completado: ${results.length} juegos procesados con datos precisos`);
+    return results;
+  }
+
+  /**
+   * Procesar juegos de Steam y obtener datos completos (MÉTODO ANTERIOR)
    */
   static async processGames(steamGames: SteamGame[]): Promise<CompleteGameData[]> {
     console.log(`🎮 Procesando ${steamGames.length} juegos de Steam...`);
@@ -216,6 +300,92 @@ export class SteamService {
   }
 
   /**
+   * Actualizar biblioteca existente con datos precisos
+   */
+  static async updateLibraryWithAccurateData(userId: string): Promise<SyncResult> {
+    try {
+      console.log('🎯 Actualizando biblioteca existente con datos precisos...');
+
+      // 1. Obtener juegos existentes de la base de datos
+      const existingGames = await this.getUserGamesFromDB(userId);
+      
+      if (existingGames.length === 0) {
+        return {
+          success: false,
+          message: 'No hay juegos en la biblioteca para actualizar',
+        };
+      }
+
+      console.log(`📚 Actualizando ${existingGames.length} juegos existentes...`);
+
+      // 2. Convertir a formato SteamGame para procesar
+      const steamGames: SteamGame[] = existingGames.map(game => ({
+        appid: game.appid,
+        name: game.name,
+        playtime_forever: game.playtime_forever
+      }));
+
+      // 3. Procesar con datos precisos
+      const processedGames = await this.processGamesWithAccurateData(steamGames);
+
+      // 4. Actualizar en la base de datos
+      const gamesToUpdate = processedGames.map(game => ({
+        user_id: userId,
+        appid: game.appid,
+        name: game.name,
+        cover_url: game.cover_url,
+        playtime_forever: game.playtime_forever,
+        metacritic_score: game.metacritic_score,
+        metacritic_user_score: game.metacritic_user_score,
+        completion_time: game.estimated_completion_time,
+        main_story_hours: game.main_story_hours,
+        main_plus_extra_hours: game.main_plus_extra_hours,
+        completionist_hours: game.completionist_hours,
+        estimated_completion_time: game.estimated_completion_time,
+        review_percentage: game.review_percentage,
+        stars_rating: game.stars_rating,
+        quality_score: game.quality_score,
+        value_rating: game.value_rating,
+        last_updated: game.last_updated
+      }));
+
+      const { error } = await supabase
+        .from('user_games')
+        .upsert(gamesToUpdate, {
+          onConflict: 'user_id,appid',
+          ignoreDuplicates: false
+        });
+
+      if (error) {
+        console.error('❌ Error actualizando juegos:', error);
+        throw error;
+      }
+
+      console.log(`🎉 ${processedGames.length} juegos actualizados con datos precisos`);
+
+      return {
+        success: true,
+        message: `¡${processedGames.length} juegos actualizados con datos precisos!`,
+        gamesImported: processedGames.length,
+      };
+
+    } catch (error) {
+      console.error('💥 Error actualizando biblioteca:', error);
+      
+      let errorMessage = 'Error desconocido';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      return {
+        success: false,
+        message: 'Error al actualizar biblioteca con datos precisos',
+        error: errorMessage,
+      };
+    }
+  }
+
+  /**
    * Sincronizar biblioteca de Steam con la base de datos
    */
   static async syncUserLibrary(userId: string, steamId: string): Promise<SyncResult> {
@@ -232,10 +402,11 @@ export class SteamService {
         };
       }
 
-      // 2. Procesar juegos (ahora es async)
-      const processedGames = await this.processGames(steamGames);
+      // 2. Procesar juegos con datos precisos (NUEVO)
+      console.log('🎯 Usando fetchGameMetrics para datos precisos...');
+      const processedGames = await this.processGamesWithAccurateData(steamGames);
 
-      // 3. Guardar en la base de datos
+      // 3. Guardar en la base de datos con nuevos campos precisos
       const gamesToInsert = processedGames.map(game => ({
         user_id: userId,
         appid: game.appid,
@@ -243,10 +414,16 @@ export class SteamService {
         cover_url: game.cover_url,
         playtime_forever: game.playtime_forever,
         metacritic_score: game.metacritic_score,
+        metacritic_user_score: game.metacritic_user_score,
         completion_time: game.estimated_completion_time,
+        main_story_hours: game.main_story_hours,
+        main_plus_extra_hours: game.main_plus_extra_hours,
+        completionist_hours: game.completionist_hours,
+        estimated_completion_time: game.estimated_completion_time,
         review_percentage: game.review_percentage,
         stars_rating: game.stars_rating,
         quality_score: game.quality_score,
+        value_rating: game.value_rating,
         last_updated: game.last_updated
       }));
 

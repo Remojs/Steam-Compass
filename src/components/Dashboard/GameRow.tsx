@@ -77,8 +77,11 @@ export const GameRow = ({ game }: GameRowProps) => {
         </div>
       </td>
       
+      {/* Horas Historia Principal - Main Story de HowLongToBeat */}
       <td className="p-4 text-center">
-        <span className="text-muted-foreground">{game.estimatedHours}h</span>
+        <span className="text-muted-foreground">
+          {game.hoursToComplete > 0 ? `${game.hoursToComplete}h` : '-'}
+        </span>
       </td>
       
       <td className="p-4 text-center">
@@ -99,15 +102,7 @@ export const GameRow = ({ game }: GameRowProps) => {
         </span>
       </td>
 
-      {/* Nueva columna: Horas para completar con estimaciones */}
-      <td className="p-4 text-center">
-        <span className="text-muted-foreground">
-          {game.hoursToComplete ? `${game.hoursToComplete}h` : 
-           game.estimatedHours > 0 ? `~${Math.round(game.estimatedHours * 1.5)}h` : '-'}
-        </span>
-      </td>
-
-      {/* Nueva columna: Calidad por hora siempre calculada */}
+      {/* Calidad por hora siempre calculada */}
       <td className="p-4 text-center">
         <span className={`font-medium ${getQualityPerHourColor(realQualityPerHour)}`}>
           {realQualityPerHour.toFixed(2)}

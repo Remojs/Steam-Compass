@@ -4,15 +4,16 @@ import { GameRow } from './GameRow';
 interface GameTableProps {
   games: Game[];
   isLoading: boolean;
+  loadingMessage?: string;
 }
 
-export const GameTable = ({ games, isLoading }: GameTableProps) => {
+export const GameTable = ({ games, isLoading, loadingMessage = 'Cargando biblioteca de juegos...' }: GameTableProps) => {
   if (isLoading) {
     return (
       <div className="bg-gradient-card rounded-xl border border-border/50 backdrop-blur-sm">
         <div className="p-8 text-center">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-foreground">Cargando biblioteca de juegos...</p>
+          <p className="text-foreground">{loadingMessage}</p>
         </div>
       </div>
     );
@@ -36,11 +37,10 @@ export const GameTable = ({ games, isLoading }: GameTableProps) => {
             <tr>
               <th className="p-4 text-left font-semibold text-accent">Portada</th>
               <th className="p-4 text-left font-semibold text-accent">Nombre</th>
-              <th className="p-4 text-center font-semibold text-accent">Horas Jugadas</th>
+              <th className="p-4 text-center font-semibold text-accent">Main Story</th>
               <th className="p-4 text-center font-semibold text-accent">Metascore</th>
               <th className="p-4 text-center font-semibold text-accent">Estrellas</th>
-              <th className="p-4 text-center font-semibold text-accent">% Positivo</th>
-              <th className="p-4 text-center font-semibold text-accent">Completar</th>
+              <th className="p-4 text-center font-semibold text-accent">% Positivo Steam</th>
               <th className="p-4 text-center font-semibold text-accent">Calidad/Hora</th>
             </tr>
           </thead>

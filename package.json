@@ -8,7 +8,10 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test-metrics": "node test-metrics.js",
+    "test-accuracy": "node test-accuracy.js",
+    "test-game": "node test-single-game.js"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.2",

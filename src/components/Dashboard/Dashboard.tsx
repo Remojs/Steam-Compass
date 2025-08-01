@@ -76,7 +76,7 @@ export const Dashboard = () => {
                 positivePercentage: metrics.total_positive + metrics.total_negative > 0 
                   ? Math.round((metrics.total_positive / (metrics.total_positive + metrics.total_negative)) * 100)
                   : 0,
-                hoursToComplete: metrics.horas, // Tiempo real de HowLongToBeat
+                hoursToComplete: metrics.horas, // Tiempo basado en playtime de Steam
                 qualityPerHour: metrics.metascore && metrics.horas > 0 
                   ? Math.round((metrics.metascore / metrics.horas) * 100) / 100
                   : 0,

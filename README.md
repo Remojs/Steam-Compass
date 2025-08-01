@@ -2,40 +2,68 @@
 
 **Tu brújula para navegar tu biblioteca de juegos de Steam**
 
-Steam Compass es una aplicación web moderna que te ayuda a gestionar y optimizar tu biblioteca de juegos de Steam mediante métricas inteligentes y análisis de datos.
+Steam Compass es una aplicación web moderna que te ayuda a gestionar y optimizar tu biblioteca de juegos de Steam mediante métricas inteligentes y análisis de datos en tiempo real.
 
 ## 🚀 Estado del Proyecto
 
 ### ✅ **Implementado**
 - **Frontend**: React 18 + TypeScript + Vite
+- **Backend API**: Node.js + Express con arquitectura de microservicios
 - **UI Library**: ShadcN/UI + TailwindCSS con paleta personalizada de Steam
 - **Autenticación**: Sistema completo con Login/Register (mock)
 - **Dashboard**: Tabla de juegos con filtros y ordenamiento
+- **Integración de APIs**:
+  - ✅ Metacritic para puntuaciones y reviews
+  - ✅ Steam Store API para reviews y detalles
 - **Routing**: React Router con rutas protegidas
 - **Estado**: Context API para autenticación
 - **Diseño**: Responsive design con tema Steam
 - **Hooks personalizados**: `useAuth`, `useSortFilter`
 
 ### 🚧 **En Desarrollo**
-- **Integración con APIs**:
-  - Steam Web API para obtener biblioteca de juegos
-  - Supabase como backend y base de datos
-  - RAWG API para puntuaciones Metacritic
-  - HowLongToBeat para estimación de horas
+- **Optimizaciones**:
+  - Caché de respuestas del backend
+  - Procesamiento batch de múltiples juegos
+  - Mejoras en los selectores de Metacritic
 
 ### 📋 **Por Implementar**
-- **Backend Real**:
+- **Backend Real con Supabase**:
   - Configuración de Supabase
   - Autenticación JWT real
   - Base de datos con tablas `users`, `sessions`, `games`
-- **Métricas Avanzadas**:
-  - Sistema de estrellas personalizado
-  - Análisis de reviews de Steam
-  - Cálculo de tiempo de completado
-- **Funcionalidades**:
+- **Funcionalidades Avanzadas**:
   - Sincronización automática con Steam
-  - Caché de datos para mejor performance
-  - Paginación para bibliotecas grandes
+  - Análisis de tendencias de gaming
+  - Recomendaciones personalizadas
+
+## 🏗️ Arquitectura
+
+### **Nueva Arquitectura (Frontend + Backend)**
+```
+SteamCompass/
+├── src/                          # Frontend React
+│   ├── components/
+│   ├── services/
+│   │   └── gameMetricsService.ts # Cliente simplificado
+│   └── ...
+├── api/                          # Backend Node.js
+│   ├── server.js                 # Servidor Express
+│   ├── services/
+│   │   ├── gameMetricsService.js # Coordinador principal
+│   │   ├── metacriticService.js  # Metacritic scraping
+│   │   ├── metacriticService.js  # Metacritic scraping
+│   │   └── steamService.js       # Steam API
+│   └── package.json
+└── ...
+```
+
+### **Flujo de Datos**
+1. Frontend solicita métricas → `http://localhost:3001/api/get-game-details`
+2. Backend coordina llamadas a:
+   - Metacritic (web scraping para scores)
+   - Steam Store API (reviews y detalles)
+3. Backend procesa y combina datos
+4. Frontend recibe respuesta unificada
 
 ## 🛠️ Tecnologías
 
@@ -49,11 +77,101 @@ Steam Compass es una aplicación web moderna que te ayuda a gestionar y optimiza
 - **Tanstack Query** - Manejo de estado del servidor
 - **Lucide React** - Iconografía
 
-### **Backend (Planificado)**
+### **Backend**
+- **Node.js** - Runtime de JavaScript
+- **Express** - Framework web
+- **Cheerio** - Web scraping para Metacritic
+- **Cheerio** - Web scraping para Metacritic
+- **CORS** - Manejo de políticas de origen cruzado
+
+### **Backend Futuro (Planificado)**
 - **Supabase** - Backend as a Service
 - **PostgreSQL** - Base de datos
 - **Steam Web API** - Datos de juegos
-- **RAWG API** - Metacritic scores
+
+## 🚀 Inicio Rápido
+
+### Prerequisitos
+- Node.js 20+ 
+- npm o yarn
+
+### Instalación y Ejecución
+
+1. **Clonar el repositorio**
+```bash
+git clone <tu-repo>
+cd SteamCompass
+```
+
+2. **Instalar dependencias del frontend**
+```bash
+npm install
+```
+
+3. **Instalar dependencias del backend**
+```bash
+cd api
+npm install
+cd ..
+```
+
+4. **Ejecutar ambos servidores**
+
+**Opción 1: Scripts automáticos**
+```bash
+# Windows
+./start-dev.bat
+
+# Linux/Mac
+./start-dev.sh
+```
+
+**Opción 2: Manualmente**
+```bash
+# Terminal 1: Backend
+cd api
+node server.js
+
+# Terminal 2: Frontend (en otra terminal)
+npm run dev
+```
+
+5. **Abrir en el navegador**
+- Frontend: http://localhost:8080 (o 8081 si 8080 está ocupado)
+- Backend API: http://localhost:3001
+
+### Comandos Útiles
+
+```bash
+# Solo frontend
+npm run dev
+
+# Solo backend
+npm run api
+
+# Probar backend
+npm run api:test
+
+# Build para producción
+npm run build
+```
+
+## 🧪 Pruebas
+
+### Probar Backend
+```bash
+cd api
+node test.js
+```
+
+### Probar Endpoints Específicos
+```bash
+# Health check
+curl http://localhost:3001/api/health
+
+# Obtener métricas de un juego
+curl "http://localhost:3001/api/get-game-details?name=Dota%202&appid=570"
+```
 
 ## 🏗️ Arquitectura
 
@@ -162,9 +280,8 @@ CREATE TABLE games (
 - [ ] Sistema de caché
 
 ### **v0.4.0 - External APIs**
-- [ ] RAWG API para Metacritic
-- [ ] HowLongToBeat integration
-- [ ] Sistema de métricas
+- [ ] RAWG API para Metacritic alternativo
+- [ ] Sistema de métricas mejorado
 
 ### **v1.0.0 - Production Ready**
 - [ ] Optimización de performance

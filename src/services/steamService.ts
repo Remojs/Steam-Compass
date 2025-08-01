@@ -1,6 +1,21 @@
 import { supabase } from './supabaseService';
-import { gameDataCollectorService, CompleteGameData } from './gameDataCollectorService';
 import { fetchGameMetrics } from './gameMetricsService';
+
+interface CompleteGameData {
+  appid: number;
+  name: string;
+  playtime_forever: number;
+  cover_url?: string;
+  metacritic_score?: number;
+  metacritic_user_score?: number;
+  completion_time?: number;
+  estimated_completion_time?: number;
+  review_percentage?: number;
+  stars_rating?: number;
+  quality_score?: number;
+  value_rating?: number;
+  last_updated?: string;
+}
 
 interface SteamGame {
   appid: number;
@@ -29,9 +44,6 @@ export interface GameData {
   metacritic_score?: number;
   metacritic_user_score?: number;
   completion_time?: number;
-  main_story_hours?: number;
-  main_plus_extra_hours?: number;
-  completionist_hours?: number;
   estimated_completion_time?: number;
   review_percentage?: number;
   stars_rating?: number;
@@ -205,7 +217,6 @@ export class SteamService {
             cover_url: `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/header.jpg`,
             
             // Datos precisos de fetchGameMetrics
-            main_story_hours: metrics.horas,
             estimated_completion_time: metrics.horas,
             metacritic_score: metrics.metascore,
             metacritic_user_score: metrics.userscore ? metrics.userscore * 10 : undefined, // Convertir 0-10 a 0-100
@@ -235,7 +246,6 @@ export class SteamService {
             name: game.name,
             playtime_forever: game.playtime_forever,
             cover_url: `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/header.jpg`,
-            main_story_hours: Math.round(game.playtime_forever / 60),
             estimated_completion_time: Math.round(game.playtime_forever / 60),
             stars_rating: 3.0,
             last_updated: new Date().toISOString()
@@ -255,48 +265,6 @@ export class SteamService {
     
     console.log(`✅ Procesamiento completado: ${results.length} juegos procesados con datos precisos`);
     return results;
-  }
-
-  /**
-   * Procesar juegos de Steam y obtener datos completos (MÉTODO ANTERIOR)
-   */
-  static async processGames(steamGames: SteamGame[]): Promise<CompleteGameData[]> {
-    console.log(`🎮 Procesando ${steamGames.length} juegos de Steam...`);
-    
-    // Convertir formato de SteamGame a formato requerido por el collector
-    const gamesToProcess = steamGames.map(game => ({
-      appid: game.appid,
-      name: game.name,
-      playtime_forever: game.playtime_forever
-    }));
-
-    // Usar el nuevo servicio de recopilación de datos
-    const result = await gameDataCollectorService.collectMultipleGamesData(
-      gamesToProcess,
-      {
-        batchSize: 3, // Lotes más pequeños para evitar rate limits
-        delayBetweenBatches: 3000, // 3 segundos entre lotes
-        includeReviews: true,
-        includeMetacritic: true,
-        includeCompletionTimes: true,
-        checkWishlist: false // No verificar wishlist por ahora
-      }
-    );
-
-    if (result.success) {
-      console.log(`✅ Procesamiento completado: ${result.successful_fetches}/${result.total_processed} juegos`);
-      
-      // Agregar URLs de cover si no están presentes
-      result.games.forEach(game => {
-        if (!game.cover_url) {
-          game.cover_url = `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/header.jpg`;
-        }
-      });
-    } else {
-      console.error(`❌ Error en el procesamiento de juegos`);
-    }
-
-    return result.games;
   }
 
   /**
@@ -338,9 +306,6 @@ export class SteamService {
         metacritic_score: game.metacritic_score,
         metacritic_user_score: game.metacritic_user_score,
         completion_time: game.estimated_completion_time,
-        main_story_hours: game.main_story_hours,
-        main_plus_extra_hours: game.main_plus_extra_hours,
-        completionist_hours: game.completionist_hours,
         estimated_completion_time: game.estimated_completion_time,
         review_percentage: game.review_percentage,
         stars_rating: game.stars_rating,
@@ -416,9 +381,6 @@ export class SteamService {
         metacritic_score: game.metacritic_score,
         metacritic_user_score: game.metacritic_user_score,
         completion_time: game.estimated_completion_time,
-        main_story_hours: game.main_story_hours,
-        main_plus_extra_hours: game.main_plus_extra_hours,
-        completionist_hours: game.completionist_hours,
         estimated_completion_time: game.estimated_completion_time,
         review_percentage: game.review_percentage,
         stars_rating: game.stars_rating,

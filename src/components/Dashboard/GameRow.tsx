@@ -77,13 +77,20 @@ export const GameRow = ({ game }: GameRowProps) => {
         </div>
       </td>
       
-      {/* Horas Historia Principal - Main Story de HowLongToBeat */}
+      {/* Horas Jugadas - Basado en Playtime de Steam */}
       <td className="p-4 text-center">
         <span className="text-muted-foreground">
           {game.hoursToComplete > 0 ? `${game.hoursToComplete}h` : '-'}
         </span>
       </td>
       
+      {/* Horas para completar 100% */}
+      <td className="p-4 text-center">
+        <span className="text-muted-foreground">
+          {game.estimatedHours > 0 ? `${game.estimatedHours}h` : '-'}
+        </span>
+      </td>
+
       <td className="p-4 text-center">
         <span className={`font-bold ${getMetascoreColor(game.metascore)}`}>
           {game.metascore > 0 ? game.metascore : '-'}

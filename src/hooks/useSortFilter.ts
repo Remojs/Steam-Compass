@@ -8,6 +8,7 @@ export interface Game {
   metascore: number;
   stars: number;
   positivePercentage: number;
+  totalPositiveComments?: number; // Added field for positive comments count
   // Nuevos campos
   hoursToComplete?: number;
   hasPlatinum?: boolean;

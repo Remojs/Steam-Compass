@@ -88,6 +88,7 @@ export const Dashboard = () => {
                 positivePercentage: metrics.total_positive + metrics.total_negative > 0 
                   ? Math.round((metrics.total_positive / (metrics.total_positive + metrics.total_negative)) * 100)
                   : 0,
+                totalPositiveComments: metrics.total_positive || 0,
                 hoursToComplete: metrics.horas, // Tiempo basado en playtime de Steam
                 hasPlatinum: false,
               };
@@ -103,6 +104,7 @@ export const Dashboard = () => {
                 metascore: game.metacritic_score || 0,
                 stars: game.stars_rating || 3,
                 positivePercentage: game.review_percentage || 0,
+                totalPositiveComments: 0, // Fallback no tiene datos de comentarios
                 hoursToComplete: playedHours,
                 hasPlatinum: false,
               };
@@ -147,6 +149,7 @@ export const Dashboard = () => {
             metascore: game.metacritic_score || 0,
             stars: game.stars_rating || 0,
             positivePercentage: game.review_percentage || 0,
+            totalPositiveComments: 0, // Fallback no tiene datos de comentarios
             hoursToComplete: playedHours,
             hasPlatinum: false,
           };
@@ -215,27 +218,25 @@ export const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-accent flex items-center justify-center p-2">
-                <Compass className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground bg-gradient-to-r from-accent via-primary to-accent bg-clip-text text-transparent">
-                  Steam Compass
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Bienvenido, {user?.username}
-                </p>
-              </div>
+              <img
+                src="/src/assets/compass-logo.png"
+                alt="Steam Compass Logo"
+                className="w-12 h-12"
+              />
+              <h1 className="text-4xl font-bold text-white">Steam Compass</h1>
             </div>
             <div className="flex items-center gap-4">
-              <ServerStatus />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span>Servidor operativo</span>
+              </div>
+              <div className="text-sm text-white">{user?.username}</div>
               <Button
                 variant="outline"
                 onClick={logout}
-                className="gap-2 border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300"
+                className="p-2 border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300"
               >
                 <LogOut className="w-4 h-4" />
-                Cerrar Sesión
               </Button>
             </div>
           </div>
@@ -250,48 +251,76 @@ export const Dashboard = () => {
           </div>
         ) : (
           <>
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-semibold mb-3 text-foreground">Tu Biblioteca de Juegos</h2>
-                <p className="text-muted-foreground">
-                  {!isLoading && (
-                    <>
-                      Mostrando {sortedAndFilteredGames.length} de {games.length} juegos
-                    </>
-                  )}
-                </p>
+            {/* Juegos Recomendados o Pendientes */}
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">Juegos Recomendados o Pendientes</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                {games
+                  .filter((game) => game.estimatedHours === 0 && game.metascore >= 90)
+                  .sort((a, b) => b.positivePercentage - a.positivePercentage)
+                  .slice(0, 6)
+                  .map((game) => (
+                    <div key={game.id} className="p-3 bg-gradient-card rounded-lg shadow-md">
+                      <img
+                        src={game.cover}
+                        alt={game.name}
+                        className="w-12 h-12 object-cover rounded-md mb-2"
+                      />
+                      <h3 className="text-sm font-bold text-foreground mb-1 line-clamp-2">{game.name}</h3>
+                      <p className="text-xs text-muted-foreground">Metascore: {game.metascore}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Tasa de aceptación: {game.positivePercentage}%
+                      </p>
+                    </div>
+                  ))}
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowSteamSync(true)}
-                  className="gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Sincronizar Steam
-                </Button>
+            </section>
+
+            {/* Biblioteca de Juegos */}
+            <section>
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold mb-3 text-foreground">Tu Biblioteca de Juegos</h2>
+                  <p className="text-muted-foreground">
+                    {!isLoading && (
+                      <>
+                        Mostrando {sortedAndFilteredGames.length} de {games.length} juegos
+                      </>
+                    )}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowSteamSync(true)}
+                    className="gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Sincronizar Steam
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            {/* Estado del caché */}
-            <CacheStatus 
-              cacheInfo={getCacheInfo()}
-              onRefresh={handleRefreshLibrary}
-              isRefreshing={isRefreshing}
-            />
+              {/* Estado del caché */}
+              <CacheStatus 
+                cacheInfo={getCacheInfo()}
+                onRefresh={handleRefreshLibrary}
+                isRefreshing={isRefreshing}
+              />
 
-            <Filters
-              sortState={sortState}
-              filterState={filterState}
-              onSortField={setSortField}
-              onPositivePercentageFilter={setPositivePercentageFilter}
-            />
+              <Filters
+                sortState={sortState}
+                filterState={filterState}
+                onSortField={setSortField}
+                onPositivePercentageFilter={setPositivePercentageFilter}
+              />
 
-            <GameTable 
-              games={sortedAndFilteredGames} 
-              isLoading={isLoading}
-              loadingMessage={loadingMessage}
-            />
+              <GameTable 
+                games={sortedAndFilteredGames} 
+                isLoading={isLoading}
+                loadingMessage={loadingMessage}
+              />
+            </section>
           </>
         )}
       </main>

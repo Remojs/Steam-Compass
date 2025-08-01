@@ -210,6 +210,11 @@ export const useAuthState = () => {
         localStorage.removeItem('steam_token');
         localStorage.removeItem('steam_user');
       }
+      
+      // Limpiar caché de juegos al cerrar sesión
+      localStorage.removeItem('steamcompass_games_cache');
+      console.log('🧹 Caché de juegos limpiado al cerrar sesión');
+      
       setUser(null);
     } catch (error) {
       console.error('Error en logout:', error);
@@ -217,6 +222,7 @@ export const useAuthState = () => {
       setUser(null);
       localStorage.removeItem('steam_token');
       localStorage.removeItem('steam_user');
+      localStorage.removeItem('steamcompass_games_cache');
     }
   };
 

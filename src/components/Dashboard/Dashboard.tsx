@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useSortFilter, Game } from '../../hooks/useSortFilter';
+import { useGameCache } from '../../hooks/useGameCache';
 import { fetchGames } from '../../services/api';
 import { fetchGameMetrics } from '../../services/gameMetricsService';
 import { SteamService } from '../../services/steamService';
@@ -8,8 +9,9 @@ import { GameTable } from './GameTable';
 import { Filters } from './Filters';
 import { SteamConnection } from '../SteamConnection';
 import { ServerStatus } from '../ServerStatus';
+import { CacheStatus } from '../CacheStatus';
 import { Button } from '../ui/button';
-import { LogOut, RefreshCw, Download, Compass } from 'lucide-react';
+import { LogOut, RefreshCw, Download, Compass, Clock } from 'lucide-react';
 
 export const Dashboard = () => {
   const [games, setGames] = useState<Game[]>([]);
@@ -17,7 +19,17 @@ export const Dashboard = () => {
   const [hasGames, setHasGames] = useState(false);
   const [showSteamSync, setShowSteamSync] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Cargando biblioteca de juegos...');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { user, logout } = useAuth();
+  
+  const {
+    cachedGames,
+    isLoadingFromCache,
+    saveToCache,
+    clearCache,
+    isValidCache,
+    getCacheInfo
+  } = useGameCache();
   
   const {
     sortedAndFilteredGames,
@@ -114,6 +126,12 @@ export const Dashboard = () => {
         console.log(`✅ ${gamesWithCorrectData.length} juegos de tu biblioteca procesados con datos precisos`);
         setLoadingMessage('Finalizando importación...');
         setGames(gamesWithCorrectData);
+        setHasGames(gamesWithCorrectData.length > 0);
+        
+        // Guardar en caché los datos procesados
+        if (gamesWithCorrectData.length > 0 && user) {
+          saveToCache(gamesWithCorrectData, user.id);
+        }
       } else {
         // Si no tiene juegos, mostrar opción de sincronización
         setShowSteamSync(true);
@@ -139,25 +157,60 @@ export const Dashboard = () => {
           };
         });
         setGames(formattedGames);
+        setHasGames(formattedGames.length > 0);
+        
+        // Guardar en caché si tenemos datos
+        if (formattedGames.length > 0 && user) {
+          saveToCache(formattedGames, user.id);
+        }
       } catch (fallbackError) {
         console.error('Error loading fallback games:', fallbackError);
       }
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, saveToCache]);
 
+  // Efecto para cargar datos iniciales (caché o fresh)
   useEffect(() => {
-    loadGamesFromDB();
-  }, [loadGamesFromDB]);
+    const loadInitialData = async () => {
+      if (!user || isLoadingFromCache) return;
+      
+      // Si tenemos datos en caché válidos, usarlos
+      if (cachedGames && cachedGames.length > 0 && isValidCache(user.id)) {
+        console.log('📦 Usando datos del caché');
+        setLoadingMessage('Cargando desde caché local...');
+        setGames(cachedGames);
+        setHasGames(true);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Si no hay caché válido, cargar desde API
+      console.log('🔄 Cargando datos frescos desde API');
+      setLoadingMessage('Obteniendo datos actualizados...');
+      await loadGamesFromDB();
+    };
+
+    loadInitialData();
+  }, [user, cachedGames, isLoadingFromCache, isValidCache, loadGamesFromDB]);
 
   const handleSyncComplete = () => {
     setShowSteamSync(false);
     loadGamesFromDB();
   };
 
-  const handleRefreshLibrary = () => {
-    loadGamesFromDB();
+  const handleRefreshLibrary = async () => {
+    if (!user) return;
+    
+    setIsRefreshing(true);
+    console.log('🔄 Actualizando biblioteca manualmente...');
+    
+    // Limpiar caché y recargar datos frescos
+    clearCache();
+    await loadGamesFromDB();
+    
+    setIsRefreshing(false);
   };
 
   return (
@@ -222,16 +275,15 @@ export const Dashboard = () => {
                   <Download className="w-4 h-4" />
                   Sincronizar Steam
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleRefreshLibrary}
-                  className="gap-2"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Actualizar
-                </Button>
               </div>
             </div>
+
+            {/* Estado del caché */}
+            <CacheStatus 
+              cacheInfo={getCacheInfo()}
+              onRefresh={handleRefreshLibrary}
+              isRefreshing={isRefreshing}
+            />
 
             <Filters
               sortState={sortState}

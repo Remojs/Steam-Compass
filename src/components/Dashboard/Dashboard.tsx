@@ -89,9 +89,6 @@ export const Dashboard = () => {
                   ? Math.round((metrics.total_positive / (metrics.total_positive + metrics.total_negative)) * 100)
                   : 0,
                 hoursToComplete: metrics.horas, // Tiempo basado en playtime de Steam
-                qualityPerHour: metrics.metascore && metrics.horas > 0 
-                  ? Math.round((metrics.metascore / metrics.horas) * 100) / 100
-                  : 0,
                 hasPlatinum: false,
               };
             } catch (error) {
@@ -107,7 +104,6 @@ export const Dashboard = () => {
                 stars: game.stars_rating || 3,
                 positivePercentage: game.review_percentage || 0,
                 hoursToComplete: playedHours,
-                qualityPerHour: 0,
                 hasPlatinum: false,
               };
             }
@@ -152,7 +148,6 @@ export const Dashboard = () => {
             stars: game.stars_rating || 0,
             positivePercentage: game.review_percentage || 0,
             hoursToComplete: playedHours,
-            qualityPerHour: 0,
             hasPlatinum: false,
           };
         });

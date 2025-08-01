@@ -10,7 +10,6 @@ export interface Game {
   positivePercentage: number;
   // Nuevos campos
   hoursToComplete?: number;
-  qualityPerHour?: number;
   hasPlatinum?: boolean;
 }
 

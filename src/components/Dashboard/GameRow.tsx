@@ -1,6 +1,6 @@
 import { Game } from '../../hooks/useSortFilter';
 import { Star, Trophy } from 'lucide-react';
-import { calculateStarRating, calculateQualityPerHour } from '../../utils/gameCalculations';
+import { calculateStarRating } from '../../utils/gameCalculations';
 
 interface GameRowProps {
   game: Game;
@@ -9,7 +9,6 @@ interface GameRowProps {
 export const GameRow = ({ game }: GameRowProps) => {
   // Calcular valores reales
   const realStarRating = calculateStarRating(game);
-  const realQualityPerHour = calculateQualityPerHour(game);
   
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => {
@@ -33,9 +32,9 @@ export const GameRow = ({ game }: GameRowProps) => {
   };
 
   const getMetascoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-500';
-    if (score >= 80) return 'text-yellow-500';
-    if (score >= 70) return 'text-orange-500';
+    if (score >= 80) return 'text-green-500';
+    if (score >= 60) return 'text-yellow-500';
+    if (score >= 40) return 'text-orange-500';
     return 'text-red-500';
   };
 
@@ -83,13 +82,6 @@ export const GameRow = ({ game }: GameRowProps) => {
           {game.hoursToComplete > 0 ? `${game.hoursToComplete}h` : '-'}
         </span>
       </td>
-      
-      {/* Horas para completar 100% */}
-      <td className="p-4 text-center">
-        <span className="text-muted-foreground">
-          {game.estimatedHours > 0 ? `${game.estimatedHours}h` : '-'}
-        </span>
-      </td>
 
       <td className="p-4 text-center">
         <span className={`font-bold ${getMetascoreColor(game.metascore)}`}>
@@ -108,22 +100,6 @@ export const GameRow = ({ game }: GameRowProps) => {
           {game.positivePercentage > 0 ? `${game.positivePercentage}%` : '-'}
         </span>
       </td>
-
-      {/* Calidad por hora siempre calculada */}
-      <td className="p-4 text-center">
-        <span className={`font-medium ${getQualityPerHourColor(realQualityPerHour)}`}>
-          {realQualityPerHour.toFixed(2)}
-        </span>
-      </td>
     </tr>
   );
-};
-
-const getQualityPerHourColor = (quality: number) => {
-  if (quality >= 2.0) return 'text-emerald-500';    // Excelente (>= 2.0)
-  if (quality >= 1.5) return 'text-green-500';      // Muy bueno (1.5-1.99)
-  if (quality >= 1.0) return 'text-yellow-500';     // Bueno (1.0-1.49)
-  if (quality >= 0.5) return 'text-orange-500';     // Regular (0.5-0.99)
-  if (quality > 0) return 'text-red-500';           // Bajo (0.01-0.49)
-  return 'text-gray-400';                           // Sin datos (0)
 };

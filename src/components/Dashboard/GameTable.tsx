@@ -37,12 +37,10 @@ export const GameTable = ({ games, isLoading, loadingMessage = 'Cargando bibliot
             <tr>
               <th className="p-4 text-left font-semibold text-accent">Portada</th>
               <th className="p-4 text-left font-semibold text-accent">Nombre</th>
-              <th className="p-4 text-center font-semibold text-accent">Main Story</th>
-              <th className="p-4 text-center font-semibold text-accent">Completar 100%</th>
+              <th className="p-4 text-center font-semibold text-accent">Horas Jugadas</th>
               <th className="p-4 text-center font-semibold text-accent">Metascore</th>
               <th className="p-4 text-center font-semibold text-accent">Estrellas</th>
               <th className="p-4 text-center font-semibold text-accent">% Positivo Steam</th>
-              <th className="p-4 text-center font-semibold text-accent">Calidad/Hora</th>
             </tr>
           </thead>
           <tbody>

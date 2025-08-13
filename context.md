@@ -97,13 +97,13 @@ flowchart LR
   * Carga asíncrona con spinners.
   * Mensajes de error y éxito.
 
-## 8. Instrucción a la IA
+## 8. PROXIMAS FEATURES
 
-> Genera **todo el código** necesario (backend en Supabase/Next.js API Routes o Express, frontend en React con CRA y CSS Modules) para que, al ejecutar `npm install && npm start`, el proyecto funcione completamente con:
->
-> * Autenticación.
-> * Integración Steam.
-> * Base de datos Supabase.
-> * Dashboard con métricas y filtros.
+
+> * Ver Wishlist en tabla
+> * Agregar juegos aparte y almacenarlos en db
+> * Tabla historica de juegos mas jugados (con los extras agregados)
+> * Dashboard con juegos pendientes y sus scores
+> * Dashboard con data de steam (Horas jugadas totales, plata gastada, etc.)
 
 ---
